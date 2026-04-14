@@ -1,17 +1,121 @@
-# table-checker
+# Verisheet
 
-“通用表格智能校验与变更说明生成器” 的 Python + Streamlit MVP 脚手架。
+通用表格智能校验与变更说明生成器
 
-当前版本提供：
+## 项目简介
 
-- 中文 Streamlit 页面
-- 旧版本 / 新版本文件上传
-- 支持 `xlsx`、`xls`、`csv`
-- 基础校验摘要
-- 基础差异摘要
-- Markdown 变更说明预览
+Verisheet 是一个面向 Excel / CSV 场景的本地化表格分析工具，用来解决两类高频问题：
 
-## 目录结构
+- 表格本身有没有明显的数据质量问题
+- 新旧两个版本之间到底改了什么，怎么快速说明给别人看
+
+在日常工作里，商品表、人员名单、活动报名表、运营台账、配置表等结构化数据经常被多人反复修改。传统做法往往依赖人工逐列检查、手动比对版本，再额外整理变更说明，效率低且容易遗漏。这个项目希望把“发现问题”和“说明问题”串成一个完整闭环。
+
+当前版本是一个可本地运行、可直接演示的 MVP，重点不在复杂平台能力，而在于把上传、分析、解释、导出这条链路做完整。
+
+## 核心能力
+
+- 支持上传 `csv`、`xlsx`、`xls` 文件
+- 支持上传旧表和新表进行版本对比
+- 支持侧边栏切换内置示例数据并自动加载
+- 支持选择主键列进行稳定的行级对比
+- 支持检测缺失值、重复主键、异常数值列、疑似类型不一致
+- 支持输出新增行、删除行、修改行和字段变更统计
+- 支持按需生成 AI 变更摘要
+- 在未配置模型接口时，自动回退到本地模板摘要
+- 支持下载 HTML 报告
+
+## 项目价值
+
+这个项目的价值主要体现在三点：
+
+- 它把表格检查中重复、机械、易漏的问题前置自动化，降低人工检查成本。
+- 它不只告诉你“哪里变了”，还帮助你把变化整理成一段能直接用于沟通的中文说明。
+- 它明确区分了规则和 AI 的边界：文件读取、主键判断、差异比较等确定性任务由规则完成，AI 主要负责摘要生成和表达增强。
+
+## AI 与规则边界
+
+本项目不是把核心判断交给 AI，而是把 AI 放在结果表达这一层。
+
+规则负责：
+
+- 文件类型识别与加载
+- 缺失值统计
+- 重复主键检测
+- 数值异常识别
+- 疑似类型问题识别
+- 新增、删除、修改行判断
+- 字段变更统计
+
+AI 负责：
+
+- 把结构化结果整理成自然语言摘要
+- 帮助用户更快形成可交付的变更说明
+
+这样做的原因很简单：核心分析要稳定、可复现、可测试，AI 更适合提升表达效率，而不是替代工程上的确定性判断。
+
+## 技术栈
+
+- Python
+- Streamlit
+- pandas
+- openpyxl
+- xlrd
+- pytest
+
+## 快速开始
+
+### 方式一：在线访问
+
+在线部署地址：
+
+```text
+https://verisheet-bgckvr6gzxyasdwbss3npy.streamlit.app/
+```
+
+说明：
+
+- 当前应用已经部署在 Streamlit Community Cloud
+- 我实际检查时，该链接会先跳转到 Streamlit 授权页
+- 也就是说，目前更适合写成“在线访问”，而不是“所有人可直接无门槛访问”
+- 如果后续将应用调整为完全公开，其他人就可以直接打开链接使用
+
+### 方式二：本地运行
+
+#### 1. 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 2. 运行应用
+
+```bash
+streamlit run app.py
+```
+
+启动后通常可在浏览器访问：
+
+```text
+http://localhost:8501
+```
+
+#### 3. 运行测试
+
+```bash
+pytest -q
+```
+
+## 使用流程
+
+1. 上传旧版本文件和新版本文件，或直接切换内置示例数据。
+2. 选择用于对比的主键列。
+3. 点击“开始分析”。
+4. 查看顶部摘要卡片、校验概览、差异分析和详细数据。
+5. 按需生成 AI 摘要。
+6. 下载 HTML 报告。
+
+## 项目结构
 
 ```text
 table-checker/
@@ -21,54 +125,66 @@ table-checker/
 ├─ .env.example
 ├─ AGENTS.md
 ├─ src/
+│  ├─ loader.py
+│  ├─ validator.py
+│  ├─ differ.py
+│  ├─ reporter.py
+│  ├─ llm_summary.py
+│  └─ utils.py
+├─ samples/
 ├─ tests/
 ├─ docs/
-├─ samples/
 └─ outputs/
 ```
 
-## 启动方式
+## 模块说明
 
-推荐在 WSL Ubuntu 中运行：
+- `app.py`：应用入口，负责页面交互、状态管理和流程编排
+- `src/loader.py`：负责文件识别与表格加载
+- `src/validator.py`：负责单表校验
+- `src/differ.py`：负责新旧表差异分析
+- `src/llm_summary.py`：负责自然语言摘要生成
+- `src/reporter.py`：负责报告输出
 
-```bash
-cd /mnt/c/Users/Administrator/Downloads/table-checker
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run app.py
-```
+## 示例场景
 
-如果默认 `pip install -r requirements.txt` 较慢或失败，可改用阿里云镜像：
+当前内置了几组适合演示的示例数据：
 
-```bash
-cd /mnt/c/Users/Administrator/Downloads/table-checker
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
-streamlit run app.py
-```
+- 商品表
+- 人员名单
+- 活动报名表
 
-启动后在浏览器打开 Streamlit 提示的本地地址，一般为：
+如果你只是想快速看效果，不需要自己准备文件，直接在侧边栏切换示例即可。
 
-```text
-http://localhost:8501
-```
+## 文档导航
 
-## 测试
+- [项目简介](docs/项目简介.md)
+- [使用说明书](docs/使用说明书.md)
+- [技术实现说明书](docs/技术实现说明书.md)
+- [过程记录](docs/过程记录.md)
 
-```bash
-pytest
-```
+## 后续规划
 
-## 后续可扩展方向
+在当前 MVP 基础上，后续可以继续扩展：
 
-- 增加字段级校验规则
-- 增加更完整的差异比较逻辑
-- 接入真实 LLM 生成自然语言变更报告
-- 增加 Markdown / HTML 文件导出
+- 增加更多字段级校验规则
+- 增加风险分级和重点问题提示
+- 增加 Markdown 下载入口
+- 优化 AI 提示词和摘要质量
+- 加入 AI 自动补全功能，例如给出缺失字段补全建议
+- 加入 AI 辅助修复建议，例如推荐标准化处理方式
+- 支持用户自定义校验规则和报告模板
 
-## 安装说明补充
+## 适用场景
 
-- Ubuntu 24.04 的系统 Python 默认带有 PEP 668 保护，但项目使用 `.venv` 虚拟环境即可正常安装依赖。
-- 本项目这次实际排查到的问题不是 PEP 668，而是 WSL 到 `pypi.org` 的 IPv6 连接异常，导致 `pip` 读取索引超时。
+这个工具适合用于：
+
+- 商品资料版本更新比对
+- 员工名单或客户名单核对
+- 活动报名表前后版本审查
+- 配置表、映射表、小型运营数据表复核
+- 面试或演示场景下展示“规则校验 + AI 表达”的完整链路
+
+## License
+
+当前仓库未单独声明 License，如需公开分发，建议后续补充。
