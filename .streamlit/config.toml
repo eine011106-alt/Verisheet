@@ -1,0 +1,10 @@
+[theme]
+primaryColor = "#1f6feb"
+backgroundColor = "#f5f7fa"
+secondaryBackgroundColor = "#e9eef5"
+textColor = "#1f2937"
+
+[server]
+folderWatchBlacklist = [".venv", "venv", "__pycache__", ".pytest_cache", "outputs"]
+fileWatcherType = "none"
+runOnSave = false

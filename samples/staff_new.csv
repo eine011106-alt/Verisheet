@@ -1,0 +1,9 @@
+员工编号,姓名,部门,邮箱,工龄,状态
+E001,张敏,财务,zhangmin@corp.com,5,在职
+E002,李强,渠道销售,liqiang@corp.com,3,在职
+E004,赵杰,销售,zhaojie@corp.com,2,在职
+E005,陈晨,行政,,4,在职
+E006,周静,技术,zhoujing@corp.com,七年,在职
+E007,孙磊,技术,zhoujing@corp.com,1,试用
+E008,吴婷,客服,wuting@corp.com,2,在职
+E009,许航,运营,xuhang@corp.com,1,试用

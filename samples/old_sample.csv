@@ -1,0 +1,4 @@
+id,name,amount,status
+1,张三,100,active
+2,李四,200,active
+3,王五,150,inactive

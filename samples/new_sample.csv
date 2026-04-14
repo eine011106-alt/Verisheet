@@ -1,0 +1,5 @@
+id,name,amount,status,remark
+1,张三,120,active,金额更新
+2,李四,200,active,
+3,王五,150,inactive,
+4,赵六,80,active,新增记录
