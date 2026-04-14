@@ -13,7 +13,7 @@ from src.differ import build_diff_summary
 from src.llm_summary import create_llm_client_from_env, generate_change_summary
 from src.loader import load_table, summarize_columns
 from src.reporter import build_html_report, build_markdown_report
-from src.utils import SUPPORTED_FILE_TYPES, format_file_size
+from src.utils import SUPPORTED_FILE_TYPES, format_file_size, normalize_records_for_display
 from src.validator import validate_table
 
 
@@ -173,7 +173,7 @@ def cached_generate_change_summary(
 def dataframe_from_records(records: list[dict[str, Any]]) -> pd.DataFrame:
     if not records:
         return pd.DataFrame([{"提示": "无数据"}])
-    return pd.DataFrame(records)
+    return pd.DataFrame(normalize_records_for_display(records))
 
 
 def build_file_info(file_name: str, file_size: int, dataframe: pd.DataFrame) -> dict[str, Any]:
