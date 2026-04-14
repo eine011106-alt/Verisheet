@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 from urllib import error, request
 
+import streamlit as st
+
 
 class LLMClient(Protocol):
     def generate_text(self, prompt: str) -> str: ...
@@ -83,20 +85,39 @@ def generate_change_report(diff_summary: dict[str, Any]) -> str:
 
 
 def create_llm_client_from_env() -> LLMClient | None:
-    api_key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
-    api_url = os.getenv("LLM_API_URL") or os.getenv("OPENAI_API_URL")
-    model = os.getenv("LLM_MODEL") or os.getenv("OPENAI_MODEL")
+    api_key = _get_runtime_config("LLM_API_KEY", "OPENAI_API_KEY")
+    api_url = _get_runtime_config("LLM_API_URL", "OPENAI_API_URL")
+    model = _get_runtime_config("LLM_MODEL", "OPENAI_MODEL")
 
     if not api_key or not api_url or not model:
         return None
 
-    timeout = int(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
+    timeout = int(_get_runtime_config("LLM_TIMEOUT_SECONDS", default="30"))
     return OpenAICompatibleLLMClient(
         api_key=api_key,
         api_url=api_url,
         model=model,
         timeout_seconds=timeout,
     )
+
+
+def _get_runtime_config(*keys: str, default: str | None = None) -> str | None:
+    for key in keys:
+        env_value = os.getenv(key)
+        if env_value:
+            return env_value
+
+    try:
+        secrets = st.secrets
+    except Exception:
+        secrets = {}
+
+    for key in keys:
+        value = secrets.get(key)
+        if value:
+            return str(value)
+
+    return default
 
 
 def _build_prompt(

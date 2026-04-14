@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 
 import pytest
+import streamlit as st
 
 from src.llm_summary import (
     OpenAICompatibleLLMClient,
@@ -124,3 +125,52 @@ def test_create_llm_client_from_env_returns_none_when_env_incomplete(monkeypatch
     client = create_llm_client_from_env()
 
     assert client is None
+
+
+def test_create_llm_client_from_env_reads_streamlit_secrets_when_env_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_API_URL", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_URL", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    monkeypatch.setattr(
+        st,
+        "secrets",
+        {
+            "LLM_API_KEY": "secret-key",
+            "LLM_API_URL": "https://example.com/v1/chat/completions",
+            "LLM_MODEL": "secret-model",
+            "LLM_TIMEOUT_SECONDS": "45",
+        },
+    )
+
+    client = create_llm_client_from_env()
+
+    assert isinstance(client, OpenAICompatibleLLMClient)
+    assert client.api_key == "secret-key"
+    assert client.api_url == "https://example.com/v1/chat/completions"
+    assert client.model == "secret-model"
+    assert client.timeout_seconds == 45
+
+
+def test_create_llm_client_from_env_prefers_env_over_streamlit_secrets(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "env-key")
+    monkeypatch.setenv("LLM_API_URL", "https://env.example.com/v1/chat/completions")
+    monkeypatch.setenv("LLM_MODEL", "env-model")
+    monkeypatch.setattr(
+        st,
+        "secrets",
+        {
+            "LLM_API_KEY": "secret-key",
+            "LLM_API_URL": "https://secret.example.com/v1/chat/completions",
+            "LLM_MODEL": "secret-model",
+        },
+    )
+
+    client = create_llm_client_from_env()
+
+    assert isinstance(client, OpenAICompatibleLLMClient)
+    assert client.api_key == "env-key"
+    assert client.api_url == "https://env.example.com/v1/chat/completions"
+    assert client.model == "env-model"
