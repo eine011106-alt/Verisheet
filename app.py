@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import time
 from datetime import datetime
 from pathlib import Path
@@ -13,7 +14,30 @@ from src.differ import build_diff_summary
 from src.llm_summary import create_llm_client_from_env, generate_change_summary
 from src.loader import load_table, summarize_columns
 from src.reporter import build_html_report, build_markdown_report
-from src.utils import SUPPORTED_FILE_TYPES, format_file_size, normalize_records_for_display
+try:
+    from src.utils import SUPPORTED_FILE_TYPES, format_file_size, normalize_records_for_display
+except ImportError:
+    from src.utils import SUPPORTED_FILE_TYPES, format_file_size
+
+    def normalize_records_for_display(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        def normalize_value(value: Any) -> Any:
+            if isinstance(value, dict):
+                normalized = {str(key): normalize_value(item) for key, item in value.items()}
+                return json.dumps(normalized, ensure_ascii=False)
+
+            if isinstance(value, (list, tuple, set)):
+                normalized = [normalize_value(item) for item in value]
+                return json.dumps(normalized, ensure_ascii=False)
+
+            return value
+
+        return [
+            {
+                str(key): normalize_value(value)
+                for key, value in record.items()
+            }
+            for record in records
+        ]
 from src.validator import validate_table
 
 
